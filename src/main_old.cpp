@@ -8,9 +8,10 @@
 #include "helpers.h"
 #include "json.hpp"
 
-#include "spline.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "vehicle.h"
+#include "spline.h"
 
 // for convenience
 using nlohmann::json;
@@ -54,14 +55,13 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
 
-  // Start in Lane 1 at zero speed
+  // Start in Lane 1
   int lane = 1;
+
+  // Set a reference velocity
   double ref_vel = 0.0; //mph
 
-  Vehicle my_car;
-
-  // Start of the main loop
-  h.onMessage([&my_car, &lane, &ref_vel,
+  h.onMessage([&lane, &ref_vel,
                &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
@@ -77,25 +77,7 @@ int main() {
         auto j = json::parse(s);
         
         string event = j[0].get<string>();
-        /**
-         * Telemetry JSON structure:
-         * 
-         * ["telemetry",
-         *   { "d":6.164833,
-         *     "end_path_d":0,
-         *     "end_path_s":0,
-         *     "previous_path_x":[],
-         *     "previous_path_y":[],
-         *     "s":124.8336,
-         *     "sensor_fusion":[[0,1028.854,1148.57,40.37725,16.71837,243.9722,9.999819],
-         *                       ......
-         *                      [11,762.1,1441.7,0,0,6653.453,-280.8947]],
-         *     "speed":0,
-         *     "x":909.48,
-         *     y":1128.67,
-         *     "yaw":0}]
-        **/
-
+        
         if (event == "telemetry") {
           // j[1] is the data JSON object
           
@@ -128,89 +110,14 @@ int main() {
            *   sequentially every .02 seconds
            */
 
-          /**
-           * Sensor fusion data
-           * 0: Car unique ID
-           * 1: map coordinate x
-           * 2: map coordinate y
-           * 3: vx
-           * 4: vy
-           * 5: s
-           * 6: d
-           */
-
           int prev_size = previous_path_x.size();
 
           if (prev_size > 0){
             car_s = end_path_s;
           }
 
-          float minimum_safe_distance = 60.0;
-          float maximum_safe_relative_speed = 0.0;
-          // Thee two vectors save information about the closest cars in all three lanes 
-          // with their relative distance and approaching speed. This information will
-          // be used in cost functions to make decision on actions to be taken.
-          // Note that all values are positive.
-          
-          // cars behind that will not cause danger are away and have same speed.
-          vector<vector<float>> approaching_cars_behind(3,{minimum_safe_distance,maximum_safe_relative_speed});
-          // cars behind that will not cause danger are away and have same speed.
-          vector<vector<float>> approaching_cars_ahead(3,{minimum_safe_distance,maximum_safe_relative_speed});
-
-          // For each lane, find the closest 
-          for (int i=0; i < sensor_fusion.size(); i++){
-            float d = sensor_fusion[i][6];
-            int l = (int) std::floor(d/4.0);
-            if ((l > -1) && (l < 3)) {
-              double vx = sensor_fusion[i][3];
-              double vy = sensor_fusion[i][4];
-              double check_speed = sqrt(vx*vx + vy*vy);
-              double check_car_s = sensor_fusion[i][5];
-
-              // Simple predictions of the position at the next step
-              // Influence of acceleration on the decision is neglected as it
-              // will be proportional to 0.02*0.02 = 0.004
-              check_car_s += ((double) prev_size*0.02*check_speed);
-              float new_car_s = car_s + car_speed * 0.02;
-
-              double distance = new_car_s - check_car_s;
-
-              //Look at cars around. Treat a car at the same s as one behind.
-              if (distance > 0){
-                if (distance < approaching_cars_ahead[l][0]){
-                  approaching_cars_ahead[l][0] = distance;
-                  approaching_cars_ahead[l][1] = car_speed - check_speed;
-                }
-              }
-              else {
-                distance *= -1;
-                if (distance < approaching_cars_behind[l][0]){
-                  approaching_cars_behind[l][0] = distance;
-                  approaching_cars_behind[l][1] = check_speed - car_speed;
-                }
-              }
-            }
-          }
-
-          for (int l = 0; l < 3; l++){
-            std::cout << "Car ahead at " << approaching_cars_ahead[l][0] 
-            << " m and speed of " <<  approaching_cars_ahead[l][1] << std::endl;
-            
-          }
-
-          for (int l = 0; l < 3; l++){
-            std::cout << "Car behind at " << approaching_cars_behind[l][0] 
-            << " m and speed of " <<  approaching_cars_behind[l][1] << std::endl;
-            
-          }
-          std::cout << "---------------------" << std::endl;
-
-          // Check the the trafic status in own lane
-          // 1. if there is a slow driving car ahead and 
-          // 2. if it is in a too close distance
-
           bool too_close = false;
-          bool slow_car_ahead = false;
+
           for (int i=0; i < sensor_fusion.size(); i++){
             float d = sensor_fusion[i][6];
             if ((d < (2.0 + 4*lane +2)) && (d > (2 + 4*lane -2))) {
@@ -218,33 +125,17 @@ int main() {
               double vy = sensor_fusion[i][4];
               double check_speed = sqrt(vx*vx + vy*vy);
               double check_car_s = sensor_fusion[i][5];
-    
-              // prediction of the position at the next step
+
               check_car_s += ((double) prev_size*0.02*check_speed);
-              float new_car_s = car_s + car_speed * 0.02;
 
-              // check if there is a slow moving car is too close ahead (< 50 m)
-              if ((check_car_s > car_s) && ((check_car_s - new_car_s) < 50.0) 
-                    && (check_speed < car_speed)){
-                slow_car_ahead = true;
-                if (lane > 0){
-                  lane = 0;
-                }
-              }
-
-              // check if a car is too close ahead (< 30 m)
-              if ((check_car_s > car_s) && ((check_car_s - new_car_s) < 30.0)){
+              if ((check_car_s > car_s) && ((check_car_s - car_s) < 30.0)){
                 too_close = true;
                 if (lane > 0){
                   lane = 0;
                 }
               }
-
             }
           }
-
-          bool passing_car_left = false;
-          bool passing_car_right = false;
 
           if (too_close){
             ref_vel -= 0.244;
@@ -260,10 +151,7 @@ int main() {
           double ref_y = car_y;
           double ref_yaw = deg2rad(car_yaw);
 
-
-          // Add Two points in the vector so that the speed and acceleration will be continuous
           if (prev_size < 2) {
-            // This will be executed only first time. Otherwise, there will be more points
             double prev_car_x = car_x - cos(car_yaw);
             double prev_car_y = car_y - sin(car_yaw);
 
@@ -289,20 +177,11 @@ int main() {
 
           }
 
-          // The decision to change lane or not is taken. The end points are calculated
-          // and used to create the spline function.
-
-          // Add three points at the end of the path so that it will become a stable
-          // path in the middle of the lane. Here, the lane could be different than
-          // the existing one.
-
-          // Transform to XY coordinate and add them to the pionts for spline
-          float lane_change_distance = 30;
-          vector<double> nextwp0 = getXY(car_s + 1.0*lane_change_distance, 2 + 4.0*lane, 
+          vector<double> nextwp0 = getXY(car_s + 30, 2 + 4.0*lane, 
                                 map_waypoints_s, map_waypoints_x, map_waypoints_y);
-          vector<double> nextwp1 = getXY(car_s + 2.0*lane_change_distance, 2 + 4.0*lane, 
+          vector<double> nextwp1 = getXY(car_s + 60, 2 + 4.0*lane, 
                                 map_waypoints_s, map_waypoints_x, map_waypoints_y);
-          vector<double> nextwp2 = getXY(car_s + 3.0*lane_change_distance, 2 + 4.0*lane, 
+          vector<double> nextwp2 = getXY(car_s + 90, 2 + 4.0*lane, 
                                 map_waypoints_s, map_waypoints_x, map_waypoints_y);
           
           ptsx.push_back(nextwp0[0]);
@@ -313,8 +192,12 @@ int main() {
           ptsy.push_back(nextwp1[1]);
           ptsy.push_back(nextwp2[1]);
 
+          // This seems to be missing in the original instructions:
 
-          // Transform the points to the car local coordinates
+          // ref_x = car_x;
+          // ref_y = car_y;
+          // End of missing
+
           for (int i = 0; i < ptsx.size(); i++){
             double shift_x = ptsx[i] - ref_x;
             double shift_y = ptsy[i] - ref_y;
@@ -327,22 +210,17 @@ int main() {
 
           s.set_points(ptsx, ptsy);
 
-          // Add points from existing path first:
           for (int i = 0; i < previous_path_x.size(); i++){
             next_x_vals.push_back(previous_path_x[i]);
             next_y_vals.push_back(previous_path_y[i]);
           }
 
-          // Discretize the path so that the distance becomes compatible
-          // with the reference velocity.
-          double target_x = lane_change_distance;
+          double target_x = 30;
           double target_y = s(target_x);
           double target_dist = sqrt(target_x*target_x + target_y*target_y);
 
-          // Use spline and interpolate points and add to the new calculated path
-          // The output of spline needs to be trasformed to the global map coordinates
-          // before adding to the next vals.
           double x_add_on = 0;
+
           for (int i = 1; i <= 50 - previous_path_x.size(); i++){
             double N = target_dist / (0.02 * ref_vel/2.24);
             double x_point = x_add_on + target_x/N;
