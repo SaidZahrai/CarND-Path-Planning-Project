@@ -13,65 +13,63 @@ class Vehicle {
  public:
   // Constructors
   Vehicle();
-  Vehicle(int lane, float s, float v, float a, string state="CS");
 
   // Destructor
   virtual ~Vehicle();
 
+  void Init(float x_, float y_, float vx_, float vy_, float s_, float d_);
+
   // Vehicle functions
-  vector<Vehicle> choose_next_state(map<int, vector<Vehicle>> &predictions);
+  void Update(float x_, float y_, float vx_, float vy_, float s_, float d_,
+              vector<vector<float>> approaching_cars_behind_,
+              vector<vector<float>> approaching_cars_ahead);
+
+  void set_next_lane();
+
+  void accelerate(double to_speed);
+
+  void decelerate(double to_speed);
+
+  void cruise_control();
 
   vector<string> successor_states();
-
-  vector<Vehicle> generate_trajectory(string state,
-                                      map<int, vector<Vehicle>> &predictions);
-
-  vector<float> get_kinematics(map<int, vector<Vehicle>> &predictions, int lane);
-
-  vector<Vehicle> constant_speed_trajectory();
-
-  vector<Vehicle> keep_lane_trajectory(map<int, vector<Vehicle>> &predictions);
-
-  vector<Vehicle> lane_change_trajectory(string state,
-                                         map<int, vector<Vehicle>> &predictions);
-
-  vector<Vehicle> prep_lane_change_trajectory(string state,
-                                              map<int, vector<Vehicle>> &predictions);
-
-  void increment(int dt);
-
-  float position_at(int t);
-
-  bool get_vehicle_behind(map<int, vector<Vehicle>> &predictions, int lane,
-                          Vehicle &rVehicle);
-
-  bool get_vehicle_ahead(map<int, vector<Vehicle>> &predictions, int lane,
-                         Vehicle &rVehicle);
-
-  vector<Vehicle> generate_predictions(int horizon=2);
-
-  void realize_next_state(vector<Vehicle> &trajectory);
-
-  void configure(vector<int> &road_data);
-
-  // public Vehicle variables
-  struct collider{
-    bool collision; // is there a collision?
-    int  time; // time collision happens
-  };
 
   map<string, int> lane_direction = {{"PLCL", 1}, {"LCL", 1},
                                      {"LCR", -1}, {"PLCR", -1}};
 
-  int L = 1;
+  float maximum_acceleration;
+  float comfortable_acceleration;
+  float maximum_deceleration;
+  float comfortable_deceleration;
 
-  int preferred_buffer = 6; // impacts "keep lane" behavior.
+  int current_lane;
+  int target_lane;
+  int previous_lane;
 
-  int lane, s, goal_lane, goal_s, lanes_available;
+  float ref_speed;
 
-  float v, target_speed, a, max_acceleration;
+  float ref_acc;
+
+  float x;
+  float y;
+  float speed;
+  float yaw;
+
+  float s;
+  float d;
+  float a;
 
   string state;
+
+  vector<vector<float>> approaching_cars_behind;
+  vector<vector<float>> approaching_cars_ahead; 
+
+  float minimum_safe_distance;
+  float lane_change_distance;
+
+  float maximum_speed;  
+  float maximum_acc;
+  float maximum_jerk;
 };
 
 #endif  // VEHICLE_H
