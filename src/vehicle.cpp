@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <cmath>
 #include "cost.h"
 
 using std::string;
@@ -80,7 +81,7 @@ void Vehicle::accelerate(double to_speed){
 void Vehicle::decelerate(double to_speed, double rel_distance){
   if (ref_speed > to_speed) {
     // Acceleration is increase if a car is too close
-    ref_speed += -comfortable_deceleration * 0.02 / 1609.344 * 3600 / std::fmax(0.1,rel_distance/minimum_safe_distance);
+    ref_speed += -comfortable_deceleration * 0.02 / 1609.344 * 3600 / fmax(0.1,rel_distance/minimum_safe_distance);
   }
 }
 

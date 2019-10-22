@@ -6,11 +6,11 @@ The goal of this project is to implement a path planner that with help of sensor
 
 1. A class vehicle, has been defined that wraps functions related to the vehicle [./src/vehicle.cpp](./src/vehicle.cpp). This class, in addition to collecting data necessary for control of the vehicle, implements four important functions:
 
-    a. update(...) is to be called every step to update the data with the fresh ones. Lines 58-72 [./src/vehicle.cpp](./src/vehicle.cpp).
+    a. update(...) is to be called every step to update the data with the fresh ones. Lines 59-73 [./src/vehicle.cpp](./src/vehicle.cpp).
 
-    b. cruise_control() drives the vehicle at a constant speed, set to 95% of maximum allowed speed, i.e. 50 MPH, if there are no obstacles on the path and otherwise, adjusts the speed to the front car. Lines 74-94 [./src/vehicle.cpp](./src/vehicle.cpp).
+    b. cruise_control() drives the vehicle at a constant speed, set to 95% of maximum allowed speed, i.e. 50 MPH, if there are no obstacles on the path and otherwise, adjusts the speed to the front car. Lines 75-95 [./src/vehicle.cpp](./src/vehicle.cpp).
 
-    c. successor_states() implements the state machine and for each state of the vehicle returns next possible stated. Lines 96-123 [./src/vehicle.cpp](./src/vehicle.cpp).
+    c. successor_states() implements the state machine and for each state of the vehicle returns next possible stated. Lines 97-124 [./src/vehicle.cpp](./src/vehicle.cpp).
 
     d. set_next_state() goes through all possible states, calculates the cost for each of them and selects the one with lowest cost as next step. Lines 126-170 [./src/vehicle.cpp](./src/vehicle.cpp).
 
@@ -66,6 +66,8 @@ Running `make` will compile the c++ files and try to link them. Assuming that al
 <p align="center">
 <img src="./images/build.png" width="600"/>
 </p>
+
+Note that in my case, the code was compiled with GNU compiler 5.4.0. Minor differences, especially with Visual c++ might exist.
 
 
 # Running the planner
