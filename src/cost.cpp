@@ -34,7 +34,9 @@ float inefficiency_cost(const Vehicle *vehicle,
   float cost = 0.0;
   // Keep the speed near max allowed
   if (vehicle->approaching_cars_ahead[next_lane][0] <= vehicle->minimum_safe_distance)
-        cost = 1.0 - std::pow(std::fmin(vehicle->approaching_cars_ahead[next_lane][1]/vehicle->maximum_speed , 1.0),4.0);
+        cost = 1.0 - 
+        std::pow(std::fmin(vehicle->approaching_cars_ahead[next_lane][1]/
+                                                  vehicle->maximum_speed , 1.0),4.0);
   return cost;
 }
 

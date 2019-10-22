@@ -93,6 +93,36 @@ void Vehicle::cruise_control(){
   }
 }
 
+vector<string> Vehicle::successor_states() {
+  // Simple FSM with three states: Keep Lane, Lane Change Left, Lane Chenge Right
+  // There is also a cruise control that avoids collisions to the car in the front
+  // "CXL" and "CXR" are the states that lane changes are happening.
+  vector<string> states;
+
+  string state = this->state;
+  if(state.compare("KL") == 0) {
+    // The car is drivin in a lane. See if it is better to change the lane.
+    states.push_back("KL");
+    if (current_lane > 0) states.push_back("CLL");
+    if (current_lane < 2) states.push_back("CLR");
+  } 
+  else if (state.compare("CXX") == 0) {
+    if ((d > target_lane * 4 + 1.5) && (d < (target_lane + 1)* 4 - 1.5)) {
+      // Target lane is reached. Change the state to Keep Lane
+      state = "KL";
+      states.push_back("KL");
+      current_lane = target_lane;
+      std::cout << "Lane change complete to " << target_lane << std::endl;
+    }
+    else {
+      // Continue lane changing.
+      states.push_back("CXX");
+    }
+  } 
+  return states;
+}
+
+
 void Vehicle::set_next_lane() {
   vector<string> possible_states = successor_states();
   float lowest_cost = 1.0e15;
@@ -136,33 +166,4 @@ void Vehicle::set_next_lane() {
   // std::cout << "Best lane " << target_lane << " cost: " 
   // << lowest_cost << " selected: " << possible_states[selected] 
   // << " End state: " << state << std::endl;
-}
-
-vector<string> Vehicle::successor_states() {
-  // Simple FSM with three states: Keep Lane, Lane Change Left, Lane Chenge Right
-  // There is also a cruise control that avoids collisions to the car in the front
-  // "CXL" and "CXR" are the states that lane changes are happening.
-  vector<string> states;
-
-  string state = this->state;
-  if(state.compare("KL") == 0) {
-    // The car is drivin in a lane. See if it is better to change the lane.
-    states.push_back("KL");
-    if (current_lane > 0) states.push_back("CLL");
-    if (current_lane < 2) states.push_back("CLR");
-  } 
-  else if (state.compare("CXX") == 0) {
-    if ((d > target_lane * 4 + 1.5) && (d < (target_lane + 1)* 4 - 1.5)) {
-      // Target lane is reached. Change the state to Keep Lane
-      state = "KL";
-      states.push_back("KL");
-      current_lane = target_lane;
-      std::cout << "Lane change complete to " << target_lane << std::endl;
-    }
-    else {
-      // Continue lane changing.
-      states.push_back("CXX");
-    }
-  } 
-  return states;
 }
