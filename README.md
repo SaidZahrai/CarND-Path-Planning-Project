@@ -1,145 +1,133 @@
-# CarND-Path-Planning-Project
-Self-Driving Car Engineer Nanodegree Program
-   
-### Simulator.
-You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).  
-
-To run the simulator on Mac/Linux, first make the binary file executable with the following command:
-```shell
-sudo chmod u+x {simulator_file_name}
-```
-
-### Goals
-In this project your goal is to safely navigate around a virtual highway with other traffic that is driving +-10 MPH of the 50 MPH speed limit. You will be provided the car's localization and sensor fusion data, there is also a sparse map list of waypoints around the highway. The car should try to go as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible, note that other cars will try to change lanes too. The car should avoid hitting other cars at all cost as well as driving inside of the marked road lanes at all times, unless going from one lane to another. The car should be able to make one complete loop around the 6946m highway. Since the car is trying to go 50 MPH, it should take a little over 5 minutes to complete 1 loop. Also the car should not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3.
-
-#### The map of the highway is in data/highway_map.txt
-Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoint's map coordinate position, the s value is the distance along the road to get to that waypoint in meters, the dx and dy values define the unit normal vector pointing outward of the highway loop.
-
-The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
-
-## Basic Build Instructions
-
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./path_planning`.
-
-Here is the data provided from the Simulator to the C++ Program
-
-#### Main car's localization Data (No Noise)
-
-["x"] The car's x position in map coordinates
-
-["y"] The car's y position in map coordinates
-
-["s"] The car's s position in frenet coordinates
-
-["d"] The car's d position in frenet coordinates
-
-["yaw"] The car's yaw angle in the map
-
-["speed"] The car's speed in MPH
-
-#### Previous path data given to the Planner
-
-//Note: Return the previous list but with processed points removed, can be a nice tool to show how far along
-the path has processed since last time. 
-
-["previous_path_x"] The previous list of x points previously given to the simulator
-
-["previous_path_y"] The previous list of y points previously given to the simulator
-
-#### Previous path's end s and d values 
-
-["end_path_s"] The previous list's last point's frenet s value
-
-["end_path_d"] The previous list's last point's frenet d value
-
-#### Sensor Fusion Data, a list of all other car's attributes on the same side of the road. (No Noise)
-
-["sensor_fusion"] A 2d vector of cars and then that car's [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, car's d position in frenet coordinates. 
-
-## Details
-
-1. The car uses a perfect controller and will visit every (x,y) point it recieves in the list every .02 seconds. The units for the (x,y) points are in meters and the spacing of the points determines the speed of the car. The vector going from a point to the next point in the list dictates the angle of the car. Acceleration both in the tangential and normal directions is measured along with the jerk, the rate of change of total Acceleration. The (x,y) point paths that the planner recieves should not have a total acceleration that goes over 10 m/s^2, also the jerk should not go over 50 m/s^3. (NOTE: As this is BETA, these requirements might change. Also currently jerk is over a .02 second interval, it would probably be better to average total acceleration over 1 second and measure jerk from that.
-
-2. There will be some latency between the simulator running and the path planner returning a path, with optimized code usually its not very long maybe just 1-3 time steps. During this delay the simulator will continue using points that it was last given, because of this its a good idea to store the last points you have used so you can have a smooth transition. previous_path_x, and previous_path_y can be helpful for this transition since they show the last points given to the simulator controller with the processed points already removed. You would either return a path that extends this previous path or make sure to create a new path that has a smooth transition with this last path.
-
-## Tips
-
-A really helpful resource for doing this project and creating smooth trajectories was using http://kluge.in-chemnitz.de/opensource/spline/, the spline function is in a single hearder file is really easy to use.
-
----
-
-## Dependencies
-
-* cmake >= 3.5
-  * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-* [uWebSockets](https://github.com/uWebSockets/uWebSockets)
-  * Run either `install-mac.sh` or `install-ubuntu.sh`.
-  * If you install from source, checkout to commit `e94b6e1`, i.e.
-    ```
-    git clone https://github.com/uWebSockets/uWebSockets 
-    cd uWebSockets
-    git checkout e94b6e1
-    ```
-
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Project Instructions and Rubric
-
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+This is a project in Udacity Nanodegree for Self-driving car, forked from [CarND-Path-Planning-Projec](https://github.com/udacity/CarND-Path-Planning-Project).
 
 
-## Call for IDE Profiles Pull Requests
+# Path planning
+The goal of this project is to implement a path planner that with help of sensor inputs can find a collision free way forward in a highway in a trafic simulator. This has been achieved in the following way:
 
-Help your fellow students!
+1. A class vehicle, has been defined that wraps functions related to the vehicle [./src/vehicle.cpp](./src/vehicle.cpp). This class, in addition to collecting data necessary for control of the vehicle, implements four important functions:
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to ensure
-that students don't feel pressured to use one IDE or another.
+    a. update(...) is to be called every step to update the data with the fresh ones.
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+    b. cruise_control() drives the vehicle at a constant speed, set to 95% of maximum allowed speed, i.e. 50 MPH, if there are no obstacles on the path and otherwise, adjusts the speed to the front car.
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
+    c. successor_states() implements the state machine and for each state of the vehicle returns next possible stated.
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
+    d. set_next_state() goes through all possible states, calculates the cost for each of them and selects the one with lowest cost as next step.
 
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
+2. [./src/cost.cpp](./src/cost.cpp) implements the cost functions a function that calls all of them and calculates the total cost. Four different costs are considered:
 
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
+    a. lane_cost() sets the cost to 0 for lane 1 and to 1 otherwise, meaning the middle lane is the prefered one.
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+    b. right_passage_cost() makes it more favorable to pass the car in the front from the left side by adding a cost contribution if there is a car to be passed from right.
 
+    c. inefficiency_cost() penalizes a driving at a speed lower that the maximum allowed speed. A fourth degree polynomial is used to push the system to choose a path with higher speed.
+
+    d. collision_cost() eliminates risks of collision through pnalizing the states where the car is driving to places that are occupied by other costs.
+
+    Finally, these costs are weighted by 0.5, 4.0, 0.25, 10.0, respectively.
+
+3. src/main.cpp was first completed following the instructions given in the video and then modified as follows:
+
+    a. According to the instructions, the path planner was adding points that were consumed between two calls. This made the reaction slower that could be adjusted for by less changes and less aggressive driving. There was also an impact on the braking distance. Path points were modified only after that they were consumed. As a simple adjustment, I decided to replan the path by keeping two points only. Line 39 [./src/main.cpp](./src/main.cpp).
+
+    b. The sensor data is used to identify the closest cars in each lane. The information is collected and stored in two vectors that is sent to the vehicle object by the function update. Line 40 [./src/main.cpp].
+
+    c. The speed reduction and acceleration is made by the cruise_control funtion of the cehicle object. Lines 111 [./src/main.cpp](./src/main.cpp).
+
+    d. I used a different method for path discretization. I have both x and y as function of s and then, I choose delta values of s by multiplying the speed and the time difference between two points (0.02 seconds). The spline function can then be used to find corresponding x and y values. Line 111 [./src/main.cpp](./src/main.cpp).
+
+4. CMakeLists.txt is modified so that Vehicle class and cost functions can be compiled and linked with the other object files.
+
+# Build, compilation and installation on Ubuntu
+After cloning the repository, create a new directory with the name build, change the directory to build and run `cmake` as shown below:
+
+`mkdir build`
+
+`cd build`
+
+`cmake ..`
+
+This will create a make file that can be used to compile and link the program using `make`. For that, while being in build directory, simply run:
+
+`make`
+
+Running `make` will compile the c++ files and try to link them. Assuming that all dependencies described in [Udacity's project repository](https://github.com/udacity/CarND-Path-Planning-Project) are satisfied, and especially [micro WebSockets](https://github.com/uNetworking/uWebSockets) is installed, make will produce an executable file called `path_planning`. If you do not have [micro WebSockets](https://github.com/uNetworking/uWebSockets) installed, please follow [Udacity's instructions](https://classroom.udacity.com/nanodegrees/nd013/parts/168c60f1-cc92-450a-a91b-e427c326e6a7/modules/1c4c9856-381c-41b8-bc40-2c2fd729d84e/lessons/3feb3671-6252-4c25-adf0-e963af4d9d4a/concepts/7dedf53a-324a-4998-aaf4-e30a3f2cef1d) to have it properly installed.
+
+# Running the planner
+Running the controller requires connection with [Udacity's simulator](https://github.com/udacity/self-driving-car-sim/releases). I had my simulator on Windows and the controller on Ubuntu running on [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+
+The execution can start by executing `./path_plnning` from the build directory, which runs the planner: 
+<p align="center">
+<img src="./images/normal_start.png" width="600"/>
+</p>
+The controller is configured with the parameters as given and waits for connection from the simulator. Here, `a_Kp`, `a_Ki` and `a_Kd` denote the coefficients for P, I and D part of PID controller for steering value nd equally, `v_Kp`, `v_Ki` and `v_Kd` denote the coefficients for P, I and D parts of PID controller for speed control. Thw simulation starts as soon as connection is established.
+
+Alternatively, you can overwrite the parameters by giving them as arguments to the command `./pid` as shown below:
+<p align="center">
+<img src="./images/custom_parameters.png" width="600"/>
+</p>
+Note that the first three correspond to steering control and the last three to speed control.
+
+In either of the two cases above, the simulation will start and you should be able to see the car driving close to centerline.
+
+<p align="center">
+<img src="./images/pid_controlled.png" width="600"/>
+</p>
+
+
+The default parameters can be optimized with Twiddle algorithm. To do that, you need to execute the command `./pid twiddle speed` for speed or `./pid twiddle steer` for steering as shown below:
+<p align="center">
+<img src="./images/twiddle_run.png" width="600"/>
+</p>
+
+If the Twiddle optimization is turned on, the simulation will be restarted a number of times according to the algorithm. The parameters are hard-coded in [./src/main.cpp](./src/main.cpp), lines 83 for steering and 87 for speed. 
+
+# Twiddle implementation
+Twiddle algorithm implemented in [./src/Twiddle.cpp](./src/Twiddle.cpp) is exactly as presented in the lessons. However, the `while` and `for` loops are replaced by named states so that the it can be run in a separate process. At each step, the error is sent to the Twiddle object by `twiddle_object.UpdateError(error)`. At each call, the error is accumulated if the initial steps are taken. Once the set limit on the number of steps to calculate error is reached, `UpdateError` makes a call to `Execute()`, which in turn makes a Twiddle step forward. The internal state of Twiddle object is respected by setting the private property `next_twiddle_step` to right value. For example, if adding the delta does not improve, we will have `next_twiddle_step = "CHECK_MINUS";`.
+
+After each Twiddle step, the simulation should be restarted. The idea of restarting the process and implementation are taken from [Bruno Guisard's proposal](https://github.com/bguisard/CarND-PID-Control-Project). 
+
+# Tuning parameters
+PID is a simple linear controller and can be implemented easily. The difficulty in having a good controller is tuning parameters that can be somewhat cumbersome and might lead to problems if the degree of nonlinearity in the process is high. In the present case, there are two PID controllers that need to be tuned, one for speed and one for steering. These two processes are interconnected as changes in the steering angles has an influence on the speed and changing speed makes the process of deviating from the best driving line faster or slower. 
+
+In the present case, I started with original Twiddle algorithm as presented in the lessons. However, I noticed that the process will be very slow and the algorithm would need a considerable amount of time to converge. To accelerate the process, I started with manual tuning, simply by visually following the changes and trying new values. 
+
+Following steps are often recommended on internet: 
+
+1. Set all parameters to zero.
+2. Increase Kp until the response becomes steadily oscillating.
+3. Increase Kd until the the oscillations go away.
+4. Repeat steps 2 and 3 until increasing Kd cannot help.
+5. Set Kp and Kd to the last stable values.
+6. Increase Ki until the level of oscillations will be acceptable.
+
+I followed the above steps, but not in very details. I stopped whern the control seemed to be acceptable visually.
+
+To start with, I had the throttle at the value set, 0.3, so that I could find a first reasonable set of parameter values for controll of steering angle. Thereafter, I turned on the PID controller and tried to tune the speed controller and finally switched to the steering control and tuned until an acceptable level could be reached.
+
+After reaching a visually acceptable level, I used Twiddle to optimize the values. I started with the manually found values and an updating values set to 20% of the obtained values. I started first with speed control and then steering control. This was repeated two times.
+
+# Reflections
+
+* PID is a commonly used control method to force a process signal follow desired values. As it is linear, it will be a very competitive method for linear system. For non-linear systems, usually a modeling step prior to generation of reference data is used to have PID to adjust for imperfections in the model, rather than the whole dynamic.
+
+* The proportional term is basically working as a spring, trying to keep the mass in the equilibrium position. The proportionality constant, Kp, varies the "force", which enforces the response to stay close to the reference. Proportional tern cannot eliminate the errors alone. Low values of Kp will not reduce the error much enough and high values lead to oscillations that cannot be damnped with the proportional term alone.
+
+* The derivative term, as the name suggests, acts on the (time) derivative of the error and acts as a damping term in the system. The higher value of Kd the more damping effect we will have. As this term acts on the derivative of the error it will be identically zero for a constant error, or very small when the changes in the error become small.
+
+* With a proportional term and a derivative terrm, the system output, or system response, can converge to a constant, but non-zero error. The integral term is responsible to make sure that there will not be any constant error left. It accumulates the error and uses that as a correction to reduce the error. The constant Ki is basically deciding the time-scale over which this effect will work. Large Ki values makes the reactions fast, but they also increase the amplitude of oscillations.
+
+* The manual tuning I made, followed the generally suggestions steps: Drive the proportional term until it reaches oscilations and then increase the damping until it becomes stable. Repeat until maximum values are reached for a stable system and then increase the integral term to reach the desired time for stabilization around the desired value. The work I did manually was simply not that accurate to be able to analyze this process quantitatively. Instead, I make a preliminary work myself and used Twiddle to optimize the parameters.
+
+* Twiddle did certainly a better job than me, but the process was relatively slow. Both the initial simulation time before start of accumulation of error as well as the total time of accumulation were set without detailed justifications. I believe these parameters should be important both for accuracy and speed of the process. However, the final results seem to be acceptable.
+
+* Although I was not able to quantify this observation, I got a feeling that the behavior of the car changed if I had print-outs on or off. My interpretation was that it was due to the impact on the socket communication and especially between the Windows machine and Ubuntu virrtual machine. To avoid such problems the sampling interval needs to be kept constant.
+
+# Results
+After completion of the implementation and tuning of parameter as explained above the car in the simulation was controlled with the two PID controllers, one for speed and one for steering. The controllers were capable to keep the car in the middle of the lane and at given speed of 20. A video recording of the simulated driving can be found in [./videos/PID_driver.mp4](./videos/PID_driver.mp4).
+
+Judging from the video, one might suspect that the lane is modelled as linear segments. This can be seen as the car changes directions at some given points along the track and not in a continuous manner. These points are noticed frequently and periodically. In addition, at some points, like at entrance of the bridge and just before and after leaving the bridge, there are some disturbances. I believe these are also from the reference data.
+
+The tuning was done at speed set to 20, but with the same parameters it can drive at 30 many laps, without problems. If you wish to do so, you need to set the `set_speed = 20;` at line 146 in [./src/main.cpp](./src/main.cpp).
+
+At speed of 40, the car went off the track after some driving time.

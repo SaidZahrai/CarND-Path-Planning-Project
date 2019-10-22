@@ -13,7 +13,7 @@ using std::vector;
 // Initializes Vehicle
 Vehicle::Vehicle(){}
 
-void Vehicle::Init(float x_, float y_, float speed_, float yaw_, float s_, float d_){
+void Vehicle::init(float x_, float y_, float speed_, float yaw_, float s_, float d_){
   x = x_;
   y = y_;
   speed = speed_;
@@ -55,7 +55,7 @@ void Vehicle::Init(float x_, float y_, float speed_, float yaw_, float s_, float
 
 Vehicle::~Vehicle() {}
 
-void Vehicle::Update(float x_, float y_, float speed_, float yaw_, float s_, float d_,
+void Vehicle::update(float x_, float y_, float speed_, float yaw_, float s_, float d_,
                      vector<vector<float>> approaching_cars_behind_,
                      vector<vector<float>> approaching_cars_ahead_){
   x = x_;
@@ -77,16 +77,17 @@ void Vehicle::accelerate(double to_speed){
   }
 }
 
-void Vehicle::decelerate(double to_speed){
+void Vehicle::decelerate(double to_speed, double rel_distance){
   if (ref_speed > to_speed) {
-    ref_speed += -comfortable_deceleration * 0.02 / 1609.344 * 3600;
+    // Acceleration is increase if a car is too close
+    ref_speed += -comfortable_deceleration * 0.02 / 1609.344 * 3600 / std::fmax(0.1,rel_distance/minimum_safe_distance);
   }
 }
 
 void Vehicle::cruise_control(){
   double acceleration; 
   if (approaching_cars_ahead[current_lane][0] <= minimum_safe_distance){
-    decelerate(approaching_cars_ahead[current_lane][1]);
+    decelerate(approaching_cars_ahead[current_lane][1], approaching_cars_ahead[current_lane][0]);
   } else {
     accelerate(maximum_speed);
   }
@@ -101,21 +102,25 @@ void Vehicle::set_next_lane() {
   string next_state = "KL";
   for (int s=0; s < possible_states.size(); s++){
     if (possible_states[s].compare("KL") == 0){
+      // Keep Lane
       next_lane = current_lane;
       next_state = "KL";
       cost = calculate_cost(this, current_lane, next_lane);
     }
     else if (possible_states[s].compare("CLL") == 0){
+      // Start to change the lane to left. If this is chosen, next state will be Lane Changing.
       next_lane = current_lane-1;
       next_state = "CXX";
       cost = calculate_cost(this, current_lane, next_lane);
     }
     else if (possible_states[s].compare("CLR") == 0){
+      // Start to change the lane to right. If this is chosen, next state will be Lane Changing.
       next_lane = current_lane + 1;
       next_state = "CXX";
       cost = calculate_cost(this, current_lane, next_lane);
     }
     else if (possible_states[s].compare("CXX") == 0){
+      // Lane changing is ongoing. Keep the target!
       next_lane = target_lane;
       next_state = "CXX";
       cost = 0;
@@ -141,18 +146,21 @@ vector<string> Vehicle::successor_states() {
 
   string state = this->state;
   if(state.compare("KL") == 0) {
+    // The car is drivin in a lane. See if it is better to change the lane.
     states.push_back("KL");
     if (current_lane > 0) states.push_back("CLL");
     if (current_lane < 2) states.push_back("CLR");
   } 
   else if (state.compare("CXX") == 0) {
     if ((d > target_lane * 4 + 1.5) && (d < (target_lane + 1)* 4 - 1.5)) {
+      // Target lane is reached. Change the state to Keep Lane
       state = "KL";
       states.push_back("KL");
       current_lane = target_lane;
       std::cout << "Lane change complete to " << target_lane << std::endl;
     }
     else {
+      // Continue lane changing.
       states.push_back("CXX");
     }
   } 

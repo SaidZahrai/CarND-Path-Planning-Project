@@ -56,7 +56,7 @@ int main() {
 
   Vehicle my_car;
 
-  my_car.Init(0.0, 0.0,0.0, 0.0, 0.0, 0.0);
+  my_car.init(0.0, 0.0,0.0, 0.0, 0.0, 0.0);
 
   // Start of the main loop
   h.onMessage([&my_car, 
@@ -136,11 +136,13 @@ int main() {
            * 5: s
            * 6: d
            */
-
+          
+          // This limits the size of data to be reused to two
           int prev_size = std::fmin(previous_path_x.size(),2);
           // int prev_size = previous_path_x.size();
 
           if (prev_size > 2){
+            // Recalculate the data for the car, assuming that it is 2 points ahead
             car_x = previous_path_x[prev_size-1];
             car_y = previous_path_y[prev_size-1];
             double car_x_prev = previous_path_x[prev_size-2];
@@ -204,7 +206,7 @@ int main() {
             }
           }
 
-          my_car.Update(car_x, car_y, car_speed, car_yaw, car_s, car_d,
+          my_car.update(car_x, car_y, car_speed, car_yaw, car_s, car_d,
                      approaching_cars_behind, approaching_cars_ahead);
 
           my_car.set_next_lane();

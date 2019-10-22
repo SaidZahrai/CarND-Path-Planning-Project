@@ -17,10 +17,10 @@ class Vehicle {
   // Destructor
   virtual ~Vehicle();
 
-  void Init(float x_, float y_, float vx_, float vy_, float s_, float d_);
+  void init(float x_, float y_, float vx_, float vy_, float s_, float d_);
 
   // Vehicle functions
-  void Update(float x_, float y_, float vx_, float vy_, float s_, float d_,
+  void update(float x_, float y_, float vx_, float vy_, float s_, float d_,
               vector<vector<float>> approaching_cars_behind_,
               vector<vector<float>> approaching_cars_ahead);
 
@@ -28,14 +28,11 @@ class Vehicle {
 
   void accelerate(double to_speed);
 
-  void decelerate(double to_speed);
+  void decelerate(double to_speed, double rel_distance);
 
   void cruise_control();
 
   vector<string> successor_states();
-
-  map<string, int> lane_direction = {{"PLCL", 1}, {"LCL", 1},
-                                     {"LCR", -1}, {"PLCR", -1}};
 
   float maximum_acceleration;
   float comfortable_acceleration;
